@@ -1,0 +1,133 @@
+name: "MLP_FINAL"
+layer {
+  name: "cifar"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+    mean_file: "/data-lmdb/mean.binaryproto"
+    mirror: 1  # 1 = on, 0 = off    
+    crop_size: 29
+  }
+  data_param {
+    source: "/data-lmdb/cifar10_train_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "cifar"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    mean_file: "/data-lmdb/mean.binaryproto"
+    mirror: 0  # 1 = on, 0 = off    
+    crop_size: 29
+  }
+  data_param {
+    source: "/data-lmdb/cifar10_test_lmdb"
+    batch_size: 100
+    backend: LMDB
+  }
+}
+layer {
+  name: "ip11"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "ip11"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 782
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "prelu1"
+  type: "PReLU"
+  bottom: "ip11"
+  top: "ip11"
+}
+
+layer {
+  name: "ip2"
+  type: "InnerProduct"
+  bottom: "ip11"
+  top: "ip2"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "prelu2"
+  type: "PReLU"
+  bottom: "ip2"
+  top: "ip2"
+}
+
+
+layer {
+  name: "ip5"
+  type: "InnerProduct"
+  bottom: "ip2"
+  top: "ip5"
+  param {
+    lr_mult: 1
+  }
+  param {
+    lr_mult: 2
+  }
+  inner_product_param {
+    num_output: 10
+    weight_filler {
+      type: "gaussian"
+      std: 0.1
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+
+layer {
+  name: "accuracy"
+  type: "Accuracy"
+  bottom: "ip5"
+  bottom: "label"
+  top: "accuracy"
+}
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "ip5"
+  bottom: "label"
+  top: "loss"
+}
